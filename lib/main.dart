@@ -17,36 +17,180 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'FileFlick',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        useMaterial3: true, // Make sure Material 3 is enabled
       ),
       home: const WelcomePage(),
     );
   }
 }
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
 
   @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  @override
   Widget build(BuildContext context) {
+    final history = FileHistory().history;
+
+    // Determine the number of columns based on the window width
+    int columnCount = 3;
+    if (MediaQuery.of(context).size.width > 800) {
+      columnCount = 5;  // Max 5 columns for large screens
+    }
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Welcome to FileFlick'),
-      ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FileTransferPage()),
-            );
-          },
-        child: const Text('Start'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 10), // Add padding to the top of the AppBar content
+          child: Center(  // Center the entire row
+            child: Row(
+              mainAxisSize: MainAxisSize.min,  // Ensure it takes only the necessary space
+              children: [
+                Icon(
+                  Icons.insert_drive_file, // File icon
+                  color: Colors.green, // Green color for the icon
+                  size: 45, // Icon size
+                ),
+                const SizedBox(width: 10), // Space between the icon and text
+                Text(
+                  'FILEFLICK',
+                  style: TextStyle(
+                    fontSize: 45, // Text size
+                    fontWeight: FontWeight.bold, // Bold text
+                    color: Colors.green, // Text color (green)
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 2, // Takes 20% of the screen height
+            child: Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FileTransferPage()),
+                  ).then((_) {
+                    // Trigger rebuild when coming back to this page
+                    setState(() {});
+                  });
+                },
+                child: const Text('Start'),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3, // Takes 30% of the screen height
+            child: history.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No files transferred yet!',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.fromLTRB(20.0, 0, 20.0, 5.0), // Apply margin to the sides and bottom
+                    child: GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columnCount,
+                        crossAxisSpacing: 8.0,
+                        mainAxisSpacing: 8.0,
+                        childAspectRatio: 3, // Aspect ratio of each card (icon + text)
+                      ),
+                      itemCount: history.length,
+                      itemBuilder: (context, index) {
+                        return Card(
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.file_present,
+                                  color: Colors.green,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    history[index],
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+          // Add this section at the end of the Expanded widget showing the file history
+          // Clear History Button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20.0, 5.0, 20.0, 10.0),
+            child: FileHistory().history.isNotEmpty  // Check if there is any history
+                ? Container(
+                    width: double.infinity,  // Set width to double.infinity
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          // Clear the history when the button is pressed
+                          FileHistory().clearHistory();
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red, // Red color for clear button
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0), // Rounded corners
+                        ),
+                      ),
+                      child: const Text(
+                        'Clear History',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  )
+                : Container(), // Empty container when no history exists
+          ),
+        ],
+      ),
     );
+  }
+}
+
+class FileHistory {
+  static final FileHistory _instance = FileHistory._internal();
+
+  factory FileHistory() => _instance;
+
+  FileHistory._internal();
+
+  final List<String> _history = [];
+
+  List<String> get history => List.unmodifiable(_history);
+
+  void addFiles(List<String> fileNames) {
+    _history.addAll(fileNames.where((name) => !_history.contains(name)));
+  }
+
+  // Clear the file history
+  void clearHistory() {
+    _history.clear();
   }
 }
 
@@ -161,10 +305,10 @@ class _FileTransferPageState extends State<FileTransferPage> {
                             width: double.infinity,
                             decoration: BoxDecoration(
                               color: _isDragging
-                                  ? Colors.deepPurple.withOpacity(0.3)
+                                  ? Colors.green.withOpacity(0.3)
                                   : Colors.grey[300],
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.deepPurple, width: 2),
+                              border: Border.all(color: Colors.green, width: 2),
                             ),
                             child: Center(
                               child: Text(
@@ -213,7 +357,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
                             margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                             elevation: 5,
                             child: ListTile(
-                              leading: const Icon(Icons.file_present, color: Colors.deepPurple),
+                              leading: const Icon(Icons.file_present, color: Colors.green),
                               title: Text(_fileNames[index]),
                               trailing: IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
@@ -245,10 +389,10 @@ class _FileTransferPageState extends State<FileTransferPage> {
                             margin: const EdgeInsets.only(top: 10), // Added margin to the right
                             decoration: BoxDecoration(
                               color: _isDragging
-                                  ? Colors.deepPurple.withOpacity(0.3)
+                                  ? Colors.green.withOpacity(0.3)
                                   : Colors.grey[300],
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.deepPurple, width: 2),
+                              border: Border.all(color: Colors.green, width: 2),
                             ),
                             child: Center(
                               child: Text(
@@ -260,19 +404,23 @@ class _FileTransferPageState extends State<FileTransferPage> {
                         ),
                       ),
                     ),
-                    Expanded(
+                      Expanded(
                       flex: 1, // 10% of height
                       child: Container(
                         width: double.infinity,
-                        margin: const EdgeInsets.only(top: 10), // Make the width fill the screen
+                        margin: const EdgeInsets.only(top: 10),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pop(context); // To go back
+                            // Save files to history
+                            FileHistory().addFiles(_fileNames);
+
+                            // Navigate back to WelcomePage
+                            Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0), // Adjust the radius value here
+                              borderRadius: BorderRadius.circular(20.0),
                             ),
                           ),
                           child: const Text(
