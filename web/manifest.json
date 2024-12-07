@@ -1,6 +1,6 @@
 {
-    "name": "fileflick",
-    "short_name": "fileflick",
+    "name": "FileFlick",
+    "short_name": "fflick",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

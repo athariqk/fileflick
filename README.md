@@ -1,4 +1,4 @@
-# fileflick
+# FileFlick
 
 A new Flutter project.
 
